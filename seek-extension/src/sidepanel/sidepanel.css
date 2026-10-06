@@ -74,33 +74,6 @@ body::before {
   min-width: 0;
 }
 
-.brand-heading {
-  align-items: baseline;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  min-width: 0;
-}
-
-.creator-link {
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.2;
-  text-decoration: none;
-  text-underline-offset: 3px;
-  white-space: nowrap;
-}
-
-.creator-link:hover {
-  text-decoration: underline;
-}
-
-.creator-link:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 .header-tools {
   align-items: end;
   display: grid;
