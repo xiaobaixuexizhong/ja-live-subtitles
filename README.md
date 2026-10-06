@@ -8,6 +8,7 @@
 - [Faster-Whisper-TransWithAI-ChickenRice](https://github.com/TransWithAI/Faster-Whisper-TransWithAI-ChickenRice)
 - [MaiSubtitle](https://github.com/OatmeaILL/MaiSubtitle)
 - [sherpa-live-sub](https://github.com/does00/sherpa-live-sub)
+- [Linuxdo](https://linux.do/)
 
 项目来源、依赖与参考关系见下文[项目来源与致谢](#项目来源与致谢)。
 
