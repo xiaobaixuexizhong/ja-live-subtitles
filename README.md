@@ -2,6 +2,15 @@
 
 日语或英语原声、没有字幕的在线视频，可用浏览器扩展生成简体中文字幕。当前扩展位于 `seek-extension/`，本地服务与启动脚本位于仓库根目录；`index.html` 和 `extension/` 是早期方案。项目基于 [流声字幕](https://github.com/Liu-Bot24/liusheng-subtitles) 修改，原始源码可从上游单独获取，本仓库不重复收录 `liusheng-source/` 检出。
 
+## 友链
+
+- [流声字幕 / liusheng-subtitles](https://github.com/Liu-Bot24/liusheng-subtitles)
+- [Faster-Whisper-TransWithAI-ChickenRice](https://github.com/TransWithAI/Faster-Whisper-TransWithAI-ChickenRice)
+- [MaiSubtitle](https://github.com/OatmeaILL/MaiSubtitle)
+- [sherpa-live-sub](https://github.com/does00/sherpa-live-sub)
+
+项目来源、依赖与参考关系见下文[项目来源与致谢](#项目来源与致谢)。
+
 ## 首次安装
 
 本项目在 Windows PowerShell、Chrome/Edge 和本机模型服务上开发。源码仓库**不包含**模型权重、Whisper 可执行文件、ChickenRice AMD/HIP 运行包或本机 API 密钥。
