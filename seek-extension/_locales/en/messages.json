@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Liusheng Subtitles - Local Japanese/English to Chinese",
+    "description": "Chrome Web Store title and extension name."
+  },
+  "appShortName": {
+    "message": "Liusheng Local",
+    "description": "Short name used in Chrome toolbar and compact surfaces."
+  },
+  "appDescription": {
+    "message": "Generate seekable Chinese subtitles for Japanese or English web video using local models.",
+    "description": "Short description shown in Chrome Web Store and extension management."
+  },
+  "actionTitle": {
+    "message": "Liusheng Local",
+    "description": "Extension action tooltip title."
+  }
+}

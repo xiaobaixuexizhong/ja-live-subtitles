@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日语视频中文字幕</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root { font-family: "Microsoft YaHei", sans-serif; color: #ebeff2; background: #101517; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; }
+    header { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-bottom: 1px solid #2c3538; background: #1a2326; }
+    h1 { font-size: 17px; margin: 0 16px 0 0; font-weight: 600; }
+    button { border: 1px solid #638777; background: #2d6652; color: #fff; border-radius: 5px; padding: 9px 16px; font-size: 14px; cursor: pointer; }
+    button:hover { background: #367b62; }
+    button:disabled { opacity: .5; cursor: default; }
+    #stop { border-color: #775a59; background: #624341; }
+    #status { color: #aab7b9; font-size: 13px; margin-left: auto; }
+    main { max-width: 1400px; margin: 0 auto; padding: 16px; }
+    .stage { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #050708; overflow: hidden; }
+    video { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .caption { position: absolute; left: 3%; right: 3%; bottom: 6%; text-align: center; pointer-events: none; }
+    #zh { display: inline; font-size: clamp(22px, 2.2vw, 36px); line-height: 1.55; font-weight: 700; color: white; text-shadow: -2px -2px 2px #000, 2px -2px 2px #000, -2px 2px 2px #000, 2px 2px 2px #000, 0 3px 8px #000; overflow-wrap: anywhere; }
+    #ja { margin-top: 4px; font-size: 15px; line-height: 1.4; color: #e2e8e8; text-shadow: 0 2px 4px #000, 0 0 3px #000; }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; color: #b7c4c5; font-size: 13px; }
+    .toolbar label { display: flex; align-items: center; gap: 7px; }
+    #history { margin: 0; padding: 0; list-style: none; border-top: 1px solid #2c3538; }
+    #history li { display: grid; grid-template-columns: 75px 1fr; gap: 12px; padding: 9px 4px; border-bottom: 1px solid #263033; font-size: 14px; }
+    .time { color: #7ca895; }
+    .source { display: block; color: #8fa1a3; font-size: 12px; margin-top: 3px; }
+    .timing { display: block; color: #748789; font-size: 11px; margin-top: 2px; }
+    @media (max-width: 650px) { header { flex-wrap: wrap; } h1 { width: 100%; } #status { margin-left: 0; } main { padding: 8px; } .stage { aspect-ratio: 4 / 3; } .caption { bottom: 3%; } #zh { font-size: 20px; } .toolbar { flex-wrap: wrap; justify-content: flex-start; row-gap: 8px; } #detail { flex-basis: 100%; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>日语视频中文字幕</h1>
+    <button id="start">选择视频标签页</button>
+    <button id="stop" disabled>停止</button>
+    <span id="status" role="status">就绪</span>
+  </header>
+  <main>
+    <div class="stage">
+      <video id="video" autoplay playsinline></video>
+      <div class="caption"><div id="zh"></div><div id="ja" hidden></div></div>
+    </div>
+    <div class="toolbar"><span id="detail">选择浏览器标签页并勾选“分享音频”</span><label><input id="preview-audio" type="checkbox">本地预览声音</label><label><input id="show-ja" type="checkbox">显示日语原文</label></div>
+    <ol id="history"></ol>
+  </main>
+  <script type="module">
+    const startButton = document.querySelector('#start');
+    const stopButton = document.querySelector('#stop');
+    const status = document.querySelector('#status');
+    const detail = document.querySelector('#detail');
+    const video = document.querySelector('#video');
+    const zh = document.querySelector('#zh');
+    const ja = document.querySelector('#ja');
+    const history = document.querySelector('#history');
+    const showJa = document.querySelector('#show-ja');
+    const previewAudio = document.querySelector('#preview-audio');
+    let stream, context, source, worklet, sink, socket, clockStart, activeTimer;
+
+    const setStatus = (message) => { status.textContent = message; };
+    const formatTime = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+
+    function stop() {
+      if (activeTimer) clearTimeout(activeTimer);
+      activeTimer = null;
+      if (worklet) { worklet.port.onmessage = null; worklet.disconnect(); }
+      if (source) source.disconnect();
+      if (sink) sink.disconnect();
+      if (context) context.close();
+      if (socket) socket.close();
+      if (stream) stream.getTracks().forEach(track => track.stop());
+      video.srcObject = null;
+      stream = context = source = worklet = sink = socket = null;
+      startButton.disabled = false;
+      stopButton.disabled = true;
+      zh.textContent = '';
+      ja.textContent = '';
+      setStatus('已停止');
+    }
+
+    async function start() {
+      startButton.disabled = true;
+      setStatus('选择正在播放日语视频的标签页');
+      try {
+        stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        if (!stream.getAudioTracks().length) throw new Error('没有音频轨道。请重新选择标签页并勾选“分享音频”。');
+        video.srcObject = stream;
+        video.muted = !previewAudio.checked;
+        await video.play();
+        socket = new WebSocket(`ws://${location.host}/ws`);
+        await new Promise((resolve, reject) => {
+          socket.onopen = resolve;
+          socket.onerror = () => reject(new Error('本地字幕服务连接失败'));
+        });
+        socket.onmessage = event => {
+          const message = JSON.parse(event.data);
+          if (message.type === 'ready') { setStatus('识别中'); detail.textContent = `按语音停顿分段，连续语音最长 ${message.max_chunk_seconds} 秒`; }
+          if (message.type === 'error') setStatus(`处理失败：${message.message}`);
+          if (message.type !== 'subtitle') return;
+          const age = (performance.now() - clockStart) / 1000 - message.end;
+          if (age > 12) return;
+          zh.textContent = message.zh;
+          ja.textContent = message.ja;
+          const row = document.createElement('li');
+          const time = document.createElement('span');
+          const text = document.createElement('span');
+          const original = document.createElement('span');
+          const timing = document.createElement('span');
+          time.className = 'time'; original.className = 'source';
+          timing.className = 'timing';
+          time.textContent = formatTime(message.start);
+          text.textContent = message.zh;
+          original.textContent = message.ja;
+          timing.textContent = `识别 ${(message.asr_ms / 1000).toFixed(2)} 秒 · 翻译 ${(message.mt_ms / 1000).toFixed(2)} 秒`;
+          text.append(original, timing); row.append(time, text); history.prepend(row);
+          while (history.children.length > 30) history.lastChild.remove();
+          setStatus('正在生成中文字幕');
+          if (activeTimer) clearTimeout(activeTimer);
+          activeTimer = setTimeout(() => { zh.textContent = ''; ja.textContent = ''; }, 6500);
+        };
+        socket.onclose = () => { if (stream) stop(); };
+        context = new AudioContext({ sampleRate: 16000 });
+        await context.audioWorklet.addModule('/worklet.js');
+        source = context.createMediaStreamSource(stream);
+        worklet = new AudioWorkletNode(context, 'audio-processor');
+        sink = context.createGain(); sink.gain.value = 0;
+        source.connect(worklet); worklet.connect(sink); sink.connect(context.destination);
+        clockStart = performance.now();
+        worklet.port.onmessage = event => {
+          if (socket?.readyState === WebSocket.OPEN && socket.bufferedAmount < 160000) socket.send(event.data);
+        };
+        stream.getVideoTracks()[0].onended = stop;
+        stopButton.disabled = false;
+      } catch (error) {
+        stop();
+        setStatus(error.message || '捕获失败');
+      }
+    }
+
+    startButton.addEventListener('click', start);
+    stopButton.addEventListener('click', stop);
+    showJa.addEventListener('change', () => { ja.hidden = !showJa.checked; });
+    previewAudio.addEventListener('change', () => { video.muted = !previewAudio.checked; });
+  </script>
+</body>
+</html>

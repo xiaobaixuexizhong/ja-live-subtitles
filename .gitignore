@@ -1,0 +1,50 @@
+# Local checkouts, backups, downloaded runtimes and models
+/liusheng-source/
+/backup/
+/bin/
+/models/
+/logs/
+/run/
+/tests/chickenrice-gfx103x/
+/tests/seamless-m4t-v2-large/
+/tests/whisper-ja-zh-base/
+/sample-ja.wav
+/tests/jfk.wav
+
+# Local browser and test state
+/.playwright-cli/
+/seek-extension/.playwright-cli/
+/seek-extension/tests/playwright-extension.config.json
+**/__pycache__/
+**/.pytest_cache/
+**/.venv/
+**/node_modules/
+
+# Credentials and generated files
+.env
+.env.*
+!.env.example
+config.ini
+*.log
+*.pid
+*.tmp
+*.srt
+*.vtt
+*.ass
+*.ssa
+*.gguf
+*.safetensors
+*.onnx
+*.pth
+*.pt
+*.bin
+*.zip
+*.tar
+*.7z
+
+# Editor and operating system
+.vscode/
+.idea/
+*.code-workspace
+.DS_Store
+Thumbs.db

@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "日语视频中文字幕浮层",
+  "version": "1.0.0",
+  "minimum_chrome_version": "116",
+  "description": "将本机日语视频中文字幕显示在当前网页视频上。",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "action": {"default_title": "开启或关闭中文字幕浮层"},
+  "background": {"service_worker": "background.js"}
+}
